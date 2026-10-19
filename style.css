@@ -1,0 +1,196 @@
+/* Wedding invite: one column of sections, each a 9:16 Canva page locked as one picture (scales with width only). */
+
+:root {
+  --col: min(100vw, 430px);              /* page column width (phones: full width) */
+  --stage-h: calc(var(--col) * 16 / 9);   /* height of one 9:16 Canva page at that width */
+  --screen-h: 100svh;
+  --sec-h: max(var(--screen-h), var(--stage-h));   /* section 1 (and the intro): the full screen */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { background: #2b0b12; }
+body {
+  background: #2b0b12;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.invite {
+  width: var(--col);
+  margin: 0 auto;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
+.sec {
+  position: relative;
+  height: var(--stage-h);
+  overflow: hidden;
+  background: #efe6d8;
+}
+
+/* page background: a texture, so cover the whole section */
+.bgimg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* the 9:16 page; everything inside is positioned in page units (% of the page, text in cqw) */
+.stage {
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+}
+
+.art { position: absolute; height: auto; }
+.art.clip { overflow: hidden; }
+.art.clip img { display: block; height: auto; }
+
+.txt {
+  position: absolute;
+  white-space: pre;
+  font-weight: 400;
+  font-synthesis: none;
+}
+/* Gilda Display is a touch lighter than Canva's itinerary serif */
+.txt.gd { -webkit-text-stroke: 0.028em currentColor; paint-order: stroke fill; }
+.txt sup { font-size: 0.6em; vertical-align: 0.45em; line-height: 0; }
+.gold {
+  /* the gradient only paints inside the box: pad it so tall capitals aren't clipped at top and bottom */
+  padding: 0.3em 0;
+  margin-top: -0.3em;
+  background: linear-gradient(180deg, #f0c087 0%, #864d21 100%);
+  background-origin: content-box;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* section 1: full screen, so the intro video's last frame lines up with it */
+#s1 { height: var(--sec-h); }
+/* section 1: the palace background sized exactly like the intro video's last frame (cover) */
+.cover {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, calc(var(--sec-h) * 941 / 1672));
+  aspect-ratio: 941 / 1672;
+  transform: translate(-50%, -50%);
+  container-type: inline-size;
+}
+.cover .bgimg { object-fit: fill; }
+
+/* ---------- tap to open + intro ---------- */
+body.locked { overflow: hidden; }
+
+/* covers the first section exactly (same column, same height), so the video's last frame lines up with it */
+.intro {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  width: var(--col);
+  height: var(--sec-h);
+  transform: translateX(-50%);
+  z-index: 50;
+  overflow: hidden;
+  background: #efe6d8;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.8s ease;
+}
+.intro:focus { outline: none; }
+.intro-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#intro-poster { transition: opacity 0.15s linear; }
+.intro.playing #intro-poster { opacity: 0; }
+.intro.done { opacity: 0; pointer-events: none; }
+
+/* music on/off */
+.mute {
+  position: fixed;
+  right: calc((100vw - var(--col)) / 2 + 14px);
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 60;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 236, 214, 0.55);
+  border-radius: 50%;
+  background: rgba(60, 14, 24, 0.55);
+  color: #fbe9d6;
+  display: grid;
+  place-items: center;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+.mute[hidden] { display: none; }
+.mute svg { width: 20px; height: 20px; fill: currentColor; }
+.mute .off, .mute.muted .on { display: none; }
+.mute.muted .off { display: block; }
+
+/* ---------- entrance animations (step 4), as measured on the Canva page ----------
+   Hidden until the section is in view (.in, set by app.js); played once. --d = delay, --i = letter index. */
+.js [data-anim] { visibility: hidden; }
+.js [data-anim].split, .js .in [data-anim] { visibility: visible; }
+.ch { display: inline-block; white-space: pre; }
+.gold .ch, .gold.split { background-clip: text; -webkit-background-clip: text; }
+.gold.split { background: none; color: inherit; padding: 0; margin-top: 0; }
+.gold.split .ch {
+  padding: 0.3em 0; margin: -0.3em 0;
+  background: linear-gradient(180deg, #f0c087 0%, #864d21 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* before: hidden pieces (only once JS has split them / is in control) */
+.js [data-anim] .ch, .js [data-anim="fade"], .js [data-anim="rotin"], .js img[data-anim] { opacity: 0; }
+
+.in [data-anim="pop"] .ch {
+  animation: wi-pop 0.7s cubic-bezier(.2, .9, .3, 1.25) both;
+  animation-delay: calc(var(--d) + var(--i) * 0.11s);
+  transform-origin: 50% 70%;
+}
+@keyframes wi-pop { from { opacity: 0; scale: 0.15; } 60% { opacity: 1; } to { opacity: 1; scale: 1; } }
+
+.in [data-anim="type"] .ch { animation: wi-show 0.01s linear both; animation-delay: calc(var(--d) + var(--i) * 0.12s); }
+@keyframes wi-show { from { opacity: 0; } to { opacity: 1; } }
+
+.in [data-anim="letters"] .ch { animation: wi-fade 0.65s ease-out both; animation-delay: calc(var(--d) + var(--i) * 0.025s); }
+@keyframes wi-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.in [data-anim="drop"] .ch {
+  animation: wi-drop 0.6s cubic-bezier(.2, .8, .3, 1) both;
+  animation-delay: calc(var(--d) + var(--i) * 0.09s);
+}
+@keyframes wi-drop { from { opacity: 0; translate: 0 -16px; } to { opacity: 1; translate: 0 0; } }
+
+.in [data-anim="fade"] { animation: wi-fade 0.6s ease-out both; animation-delay: var(--d); }
+.in [data-anim="rotin"] { animation: wi-rotin 0.5s ease-out both; animation-delay: var(--d); }
+@keyframes wi-rotin { from { opacity: 0; rotate: -45deg; } to { opacity: 1; rotate: 0deg; } }
+
+.in img[data-anim="fadein"] { animation: wi-fade 0.45s ease-out both; animation-delay: var(--d); }
+.in img[data-anim="slide-left"] { animation: wi-slide 0.5s ease-out both; animation-delay: var(--d); }
+@keyframes wi-slide { from { opacity: 0; translate: -80px 0; } to { opacity: 1; translate: 0 0; } }
+.in img[data-anim="rise"] { animation: wi-rise 0.5s ease-out both; animation-delay: var(--d); }
+@keyframes wi-rise { from { opacity: 0; translate: 0 80px; } to { opacity: 1; translate: 0 0; } }
+
+/* petals: visible straight away, turning slowly forever (~18 degrees a second) */
+.js img[data-anim="spin"] { opacity: 1; }
+.in img[data-anim="spin"] { animation: wi-spin 20s linear infinite; }
+@keyframes wi-spin { to { rotate: 360deg; } }
+
+/* guests who ask their phone for less motion: everything simply fades in */
+@media (prefers-reduced-motion: reduce) {
+  .in [data-anim] .ch, .in [data-anim] { animation: wi-fade 0.5s ease-out both !important; animation-delay: 0s !important; }
+  .in img[data-anim="spin"] { animation: none !important; }
+}
