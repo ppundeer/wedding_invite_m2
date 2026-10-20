@@ -144,12 +144,31 @@
       document.body.classList.remove('locked');
       intro.classList.add('done');
       watchScrolling();
+      showScrollHint();
       setTimeout(function () {
         intro.parentNode && intro.parentNode.removeChild(intro);
         loadRestInBackground();
       }, 900);
     });
   }
+  // ---------- scroll-down hint on section 1 ----------
+  // Appears a moment after the page is revealed, goes away for good at the first scroll; a tap glides to section 2.
+  var hint = document.getElementById('scroll-hint');
+  function showScrollHint() {
+    if (!hint) return;
+    var t = setTimeout(function () { if (window.scrollY < 40) hint.classList.add('show'); }, 1200);
+    function hide() {
+      if (window.scrollY < 40) return;
+      clearTimeout(t);
+      hint.classList.remove('show');
+      window.removeEventListener('scroll', hide);
+    }
+    window.addEventListener('scroll', hide, {passive: true});
+    hint.addEventListener('click', function () {
+      if (sections[1]) sections[1].scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
+  }
+
   function open() {
     if (opened) return;
     opened = true;
